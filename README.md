@@ -1,3 +1,3 @@
 # Advent of Code 2021
 
-Python solutions. Some clever, most not.
+Python solutions. Not even clever ones mostly
