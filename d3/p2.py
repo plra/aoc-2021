@@ -1,6 +1,3 @@
-from functools import reduce
-from operator import mul
-
 bitstrings = None
 with open("input.txt") as f:
     bitstrings = [b.strip() for b in f.readlines()]

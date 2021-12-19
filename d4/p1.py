@@ -1,5 +1,3 @@
-from pprint import pprint
-
 WIDTH = 5
 
 
@@ -47,6 +45,5 @@ if __name__ == "__main__":
                 done = True
                 break
         if done:
-            pprint(board)
             print(score(board, draw))
             break
