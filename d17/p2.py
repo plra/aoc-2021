@@ -1,14 +1,14 @@
-from p1 import hits
+from p1 import hits, min_vx
 
 
 def hit_velocities(target_area):
-    _, xmax, ymin, _ = target_area
-    return [
-        (vx, vy)
-        for vx in range(1, xmax + 1)
-        for vy in range(ymin, 1000)
-        if hits(vx, vy, target_area)
-    ]
+    xmin, xmax, ymin, _ = target_area
+    hvs = []
+    for vx in range(min_vx(xmin), xmax + 1):
+        for vy in range(ymin, 1000):
+            if hits(vx, vy, target_area):
+                hvs.append((vx, vy))
+    return hvs
 
 
 if __name__ == "__main__":
