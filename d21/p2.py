@@ -1,8 +1,10 @@
 from p1 import advance
+from functools import lru_cache
 
 ROLL_UNIVERSES = {3: 1, 4: 3, 5: 6, 6: 7, 7: 6, 8: 3, 9: 1}
 
 
+@lru_cache(maxsize=None)
 def play(p1_space, p2_space, p1_score=0, p2_score=0, turn="p1", max_score=21):
     if turn == "p2" and p1_score >= max_score:
         return 1, 1
