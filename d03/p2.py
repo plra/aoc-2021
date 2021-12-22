@@ -4,8 +4,8 @@ from operator import ge, lt
 print(
     reduce(
         lambda p, b: p * int(b.pop(), 2),
-        [
-            reduce(
+        (
+            lambda S: reduce(
                 lambda sets, i: [
                     set(
                         filter(
@@ -20,8 +20,7 @@ print(
                 range(len(S[0]) - 1),
                 (set(S),) * 2,
             )
-            for S in [open("input.txt").readlines()]
-        ].pop(),
+        )(open("input.txt").readlines()),
         1,
     )
 )
