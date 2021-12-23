@@ -22,7 +22,7 @@ lmap = lambda f, xs: list(map(f, xs))
 print(
     (
         lambda draws, boards: reduce(
-            lambda result_and_boards, draw: (
+            lambda score_and_boards, draw: (
                 (
                     lambda boards: (
                         reduce(
@@ -50,11 +50,11 @@ print(
                             ),
                             board,
                         ),
-                        result_and_boards[1],
+                        score_and_boards[1],
                     )
                 )
-                if result_and_boards[0] is None
-                else result_and_boards
+                if score_and_boards[0] is None
+                else score_and_boards
             ),
             draws,
             (None, boards),
