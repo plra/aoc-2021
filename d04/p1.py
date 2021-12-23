@@ -1,3 +1,5 @@
+from functools import reduce
+
 WIDTH = 5
 
 
@@ -14,36 +16,48 @@ def read(filename):
         return draws, boards
 
 
-def mark(board, draw):
-    for i in range(WIDTH):
-        for j in range(WIDTH):
-            num, _ = board[i][j]
-            if num == draw:
-                board[i][j] = (num, True)
+lmap = lambda f, xs: list(map(f, xs))
 
 
-def wins_by_row(board):
-    return any(all(found for n, found in row) for row in board)
-
-
-def wins(board):
-    board_t = list(map(list, zip(*board)))
-    return wins_by_row(board) or wins_by_row(board_t)
-
-
-def score(board, draw):
-    return draw * sum(n for row in board for n, found in row if not found)
-
-
-if __name__ == "__main__":
-    draws, boards = read("input.txt")
-    done = False
-    for draw in draws:
-        for board in boards:
-            mark(board, draw)
-            if wins(board):
-                done = True
-                break
-        if done:
-            print(score(board, draw))
-            break
+print(
+    (
+        lambda draws, boards: reduce(
+            lambda result_and_boards, draw: (
+                (
+                    lambda boards: (
+                        reduce(
+                            lambda score, board: sum(
+                                n for row in board for (n, seen) in row if not seen
+                            )
+                            * draw
+                            if score is None
+                            and any(
+                                all(seen for (_, seen) in row)
+                                for b in [board, zip(*board)]
+                                for row in b
+                            )
+                            else score,
+                            boards,
+                            None,
+                        ),
+                        boards,
+                    )
+                )(
+                    lmap(
+                        lambda board: lmap(
+                            lambda row: lmap(
+                                lambda e: (e[0], draw == e[0] or e[1]), row
+                            ),
+                            board,
+                        ),
+                        result_and_boards[1],
+                    )
+                )
+                if result_and_boards[0] is None
+                else result_and_boards
+            ),
+            draws,
+            (None, boards),
+        )[0]
+    )(*read("input.txt"))
+)
