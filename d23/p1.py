@@ -1,24 +1,14 @@
+# Time to beat: python3 p1.py  13.02s user 0.51s system 96% cpu 13.977 total
+
 import networkx as nx
 from networkx.algorithms import shortest_path_length
 from copy import deepcopy
 
-ENERGY_PER_MOVE = {c: 10 ** (ord(c) - ord("A")) for c in "ABCD"}
-DESTINATION_COLS = {c: 2 * (ord(c) - ord("A")) + 3 for c in "ABCD"}
+ENERGY_PER_MOVE = {"A": 1, "B": 10, "C": 100, "D": 1000}
+DESTINATION_COLS = {"A": 2, "B": 4, "C": 6, "D": 8}
 
-START_BURROW_STRING = (
-    "#############\n"
-    "#...........#\n"
-    "###D#C#D#B###\n"
-    "  #C#A#A#B#  \n"
-    "  #########  "
-)
-END_BURROW_STRING = (
-    "#############\n"
-    "#...........#\n"
-    "###A#B#C#D###\n"
-    "  #A#B#C#D#  \n"
-    "  #########  "
-)
+START_BURROW_STRING = "...........\n##D#C#D#B##\n #C#A#A#B# "
+END_BURROW_STRING = "...........\n##A#B#C#D##\n #A#B#C#D# "
 
 
 def parse(diagram):
@@ -29,31 +19,34 @@ def to_string(burrow):
     return "\n".join(["".join(row) for row in burrow])
 
 
-# 0  #############
-# 1  #...........#  hall
-# 2  ###A#B#C#D###  2
-# 3    #A#B#C#D#
-# 4    #A#B#C#D#
-# 5    #A#B#C#D#    r_lowest
-# 6    #########
-#    01 3 5 7 9 te
+# 0  ...........  hall
+# 1  ##A#B#C#D##  2
+# 2   #A#B#C#D#
+# 3   #A#B#C#D#
+# 4   #A#B#C#D#    r_lowest
+#    0 2 4 6 8 t
 #       ^ ^ ^ ^
 #        rooms
 
 # Get moves for pod at position (r, c) as (r_dest, c_dest, hops)
 def possible_moves_from(r, c, burrow):
     pod = burrow[r][c]
-    r_lowest = len(burrow) - 2
 
-    if r > 1:  # Move from a room to the hall
+    hall_row = 0
+    hall = burrow[hall_row]
+    hall_left_col, hall_right_col = 0, 10
+    room_top_row = 1
+    room_bottom_row = len(burrow) - 1
+
+    if r > hall_row:  # Move from a room to the hall
         # Can't move if other pod is blocking room exit. This will only happen if there's
         # a pod immediately above.
-        if r > 2 and burrow[r - 1][c] != ".":
+        if r > room_top_row and burrow[r - 1][c] != ".":
             return []
 
         # Don't move if pod is already at a valid destination position
         if c == DESTINATION_COLS[pod] and all(
-            burrow[r_room][c] in [".", pod] for r_room in range(2, r_lowest + 1)
+            burrow[r_room][c] in [".", pod] for r_room in range(1, room_bottom_row + 1)
         ):
             return []
 
@@ -63,12 +56,14 @@ def possible_moves_from(r, c, burrow):
         # subhall without hitting something
         moves = []
 
-        for subhall in [range(c - 1, 0, -1), range(c + 1, 12)]:
-            for c_dest in subhall:
-                if burrow[1][c_dest] != ".":
+        for subhall in [
+            list(range(c - 1, hall_left_col, -2)) + [hall_left_col],
+            list(range(c + 1, hall_right_col, 2)) + [hall_right_col],
+        ]:
+            for c_hall in subhall:
+                if hall[c_hall] != ".":
                     break
-                if c_dest not in DESTINATION_COLS.values():
-                    moves.append((1, c_dest, abs(c_dest - c) + r - 1))
+                moves.append((hall_row, c_hall, abs(c_hall - c) + r))
 
         return moves
     else:  # Move from the hall to a room
@@ -77,21 +72,21 @@ def possible_moves_from(r, c, burrow):
         # Check if room is enterable
         if any(
             burrow[r_room][c_dest] not in [".", pod]
-            for r_room in range(2, r_lowest + 1)
+            for r_room in range(room_top_row, room_bottom_row + 1)
         ):
             return []
 
         # Check if hallway is clear
         if c < c_dest:
-            subhall = range(max(c, 2), c_dest, 2)
+            subhall = range(max(c, hall_left_col + 1), c_dest, 2)
         else:
-            subhall = range(min(c, 10), c_dest, -2)
+            subhall = range(min(c, hall_right_col - 1), c_dest, -2)
 
-        if all(burrow[1][c_int] == "." or c_int == c for c_int in subhall):
+        if all(hall[c_hall] == "." or c_hall == c for c_hall in subhall):
             # Go as far down in room as possible
-            for r_dest in range(r_lowest, 1, -1):
+            for r_dest in range(room_bottom_row, room_top_row - 1, -1):
                 if burrow[r_dest][c_dest] == ".":
-                    return [(r_dest, c_dest, abs(c_dest - c) + r_dest - 1)]
+                    return [(r_dest, c_dest, abs(c_dest - c) + r_dest)]
 
         # We don't need to consider hall-to-hall moves.
         return []
@@ -145,7 +140,7 @@ def build_burrow_graph(initial_burrow):
 if __name__ == "__main__":
     start_burrow = parse(START_BURROW_STRING)
     G = build_burrow_graph(start_burrow)
-    # Find lowest-energy solution by running Dijkstra's on G
+    # Find lowest-energy solution by running Dijkstra on G
     print(
         shortest_path_length(G, START_BURROW_STRING, END_BURROW_STRING, weight="weight")
     )
